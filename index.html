@@ -1,13 +1,132 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="manifest.json">
-    <title>Elite Fitness App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elite PWA</title>
+
+<link rel="manifest" href="manifest.json">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { margin:0; font-family:-apple-system; background:#0b0b0b; color:white; }
+header { padding:15px; font-size:20px; }
+
+.tabs { display:flex; }
+.tab { flex:1; text-align:center; padding:10px; background:#1a1a1a; }
+.active { background:#00ffcc; color:black; }
+
+.card { background:#121212; margin:10px; padding:12px; border-radius:12px; }
+
+.set { display:flex; justify-content:space-between; margin:5px 0; }
+
+button { padding:6px; border:none; border-radius:6px; }
+.done { background:#00ffcc; }
+.fail { background:#ff4d4d; }
+.mid { background:#ffaa00; }
+
+input { width:100%; padding:8px; margin:5px 0; border-radius:8px; border:none; }
+</style>
 </head>
+
 <body>
-    <h1>Welcome to the Elite Fitness App</h1>
-    <script src="sw.js"></script>
+
+<header>Elite App</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('workout')">Workout</div>
+  <div class="tab" onclick="show('diet')">Diet</div>
+  <div class="tab" onclick="show('dashboard')">Dashboard</div>
+</div>
+
+<div id="workout"></div>
+<div id="diet" style="display:none"></div>
+<div id="dashboard" style="display:none"></div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("data")) || [];
+let meals = JSON.parse(localStorage.getItem("meals")) || [];
+let day = parseInt(localStorage.getItem("day")) || 1;
+
+function show(tab){
+  ["workout","diet","dashboard"].forEach(t=>{
+    document.getElementById(t).style.display="none";
+  });
+  document.getElementById(tab).style.display="block";
+}
+
+// WORKOUT
+function workout(){
+  let html = `<div class="card"><h3>Day ${day}</h3>`;
+
+  let weight = 30 + (Math.floor(day/5)*2.5);
+
+  for(let i=1;i<=5;i++){
+    html += `
+    <div class="set">
+      <span>${weight}kg × ${[10,5,8,6,5][i-1]}</span>
+      <div>
+        <button class="done" onclick="log(${weight},'done')">✓</button>
+        <button class="mid" onclick="log(${weight},'mid')">~</button>
+        <button class="fail" onclick="log(${weight},'fail')">✕</button>
+      </div>
+    </div>`;
+  }
+
+  html += `<button onclick="nextDay()">Next Day</button></div>`;
+  document.getElementById("workout").innerHTML = html;
+}
+
+function log(w,s){
+  data.push({day,w,s});
+  localStorage.setItem("data", JSON.stringify(data));
+}
+
+function nextDay(){
+  day++;
+  localStorage.setItem("day", day);
+  workout();
+}
+
+// DIET
+function diet(){
+  document.getElementById("diet").innerHTML = `
+  <div class="card">
+  <input id="cal" placeholder="Calories">
+  <input id="prot" placeholder="Protein">
+  <button onclick="addMeal()">Add Meal</button>
+  </div>`;
+}
+
+function addMeal(){
+  meals.push({
+    c:document.getElementById("cal").value,
+    p:document.getElementById("prot").value
+  });
+  localStorage.setItem("meals", JSON.stringify(meals));
+}
+
+// DASHBOARD
+function dashboard(){
+  let c = meals.reduce((a,b)=>a+Number(b.c||0),0);
+  let p = meals.reduce((a,b)=>a+Number(b.p||0),0);
+
+  document.getElementById("dashboard").innerHTML = `
+  <div class="card">
+  Calories: ${c}<br>
+  Protein: ${p}
+  </div>`;
+}
+
+workout();
+diet();
+dashboard();
+
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+
 </body>
 </html>
