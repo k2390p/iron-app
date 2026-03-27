@@ -2,28 +2,49 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Elite PWA</title>
-
+<title>Elite 100-Day App</title>
 <link rel="manifest" href="manifest.json">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body { margin:0; font-family:-apple-system; background:#0b0b0b; color:white; }
+
 header { padding:15px; font-size:20px; }
 
 .tabs { display:flex; }
 .tab { flex:1; text-align:center; padding:10px; background:#1a1a1a; }
 .active { background:#00ffcc; color:black; }
 
-.card { background:#121212; margin:10px; padding:12px; border-radius:12px; }
+.daybar { display:flex; justify-content:space-between; padding:10px; }
 
-.set { display:flex; justify-content:space-between; margin:5px 0; }
+.card {
+  background:#121212;
+  margin:12px;
+  padding:16px;
+  border-radius:18px;
+  box-shadow:0 6px 25px rgba(0,0,0,0.6);
+}
 
-button { padding:6px; border:none; border-radius:6px; }
-.done { background:#00ffcc; }
-.fail { background:#ff4d4d; }
-.mid { background:#ffaa00; }
+.exercise-name { font-size:18px; font-weight:600; }
+.type { font-size:12px; color:#aaa; }
+
+.progress { height:6px; background:#333; border-radius:10px; margin-top:8px; }
+.progress-bar { height:6px; background:#00ffcc; border-radius:10px; }
+
+.set {
+  display:flex;
+  justify-content:space-between;
+  padding:12px;
+  margin-top:8px;
+  border-radius:12px;
+  background:#1c1c1c;
+}
+
+.set.done { background:#00ffcc; color:black; }
+.set.fail { background:#ff4d4d; }
+.set.mid { background:#ffaa00; }
+
+button { border:none; border-radius:8px; padding:6px 8px; }
 
 input { width:100%; padding:8px; margin:5px 0; border-radius:8px; border:none; }
 </style>
@@ -31,12 +52,18 @@ input { width:100%; padding:8px; margin:5px 0; border-radius:8px; border:none; }
 
 <body>
 
-<header>Elite App</header>
+<header>Elite 100-Day System</header>
 
 <div class="tabs">
-  <div class="tab active" onclick="show('workout')">Workout</div>
-  <div class="tab" onclick="show('diet')">Diet</div>
-  <div class="tab" onclick="show('dashboard')">Dashboard</div>
+  <div class="tab active" onclick="showTab('workout')">Workout</div>
+  <div class="tab" onclick="showTab('diet')">Diet</div>
+  <div class="tab" onclick="showTab('dashboard')">Dashboard</div>
+</div>
+
+<div class="daybar">
+  <button onclick="prevDay()">←</button>
+  <div>Day <span id="dayNum"></span></div>
+  <button onclick="nextDay()">→</button>
 </div>
 
 <div id="workout"></div>
@@ -44,52 +71,127 @@ input { width:100%; padding:8px; margin:5px 0; border-radius:8px; border:none; }
 <div id="dashboard" style="display:none"></div>
 
 <script>
+let day = parseInt(localStorage.getItem("day")) || 1;
 let data = JSON.parse(localStorage.getItem("data")) || [];
 let meals = JSON.parse(localStorage.getItem("meals")) || [];
-let day = parseInt(localStorage.getItem("day")) || 1;
 
-function show(tab){
+function week(){ return Math.floor((day-1)/5); }
+function prog(){ return week()*2.5; }
+
+const days = ["Upper","Lower","Push","Pull","Legs"];
+
+function build(type){
+  let p = prog();
+
+  if(type==="Upper"){
+    return [
+      {name:"Bench Press",type:"Main Lift",sets:[
+        {w:15,r:10,t:"Warm-up"},
+        {w:20,r:5,t:"Warm-up"},
+        {w:30+p,r:8,t:"Main"},
+        {w:30+p,r:6,t:"Main"},
+        {w:30+p,r:5,t:"Main"}]},
+      {name:"Barbell Row",type:"Main",sets:[
+        {w:40+p,r:8,t:"Main"},{w:40+p,r:8,t:"Main"},
+        {w:40+p,r:8,t:"Main"},{w:40+p,r:8,t:"Main"}]},
+      {name:"OHP",type:"Accessory",sets:[
+        {w:30+p,r:6,t:"Accessory"},{w:30+p,r:6,t:"Accessory"}]}
+    ];
+  }
+
+  if(type==="Lower"){
+    return [
+      {name:"Squat",type:"Main",sets:[
+        {w:30,r:10,t:"Warm-up"},
+        {w:40,r:5,t:"Warm-up"},
+        {w:60+p,r:8,t:"Main"},
+        {w:60+p,r:6,t:"Main"},
+        {w:60+p,r:5,t:"Main"}]},
+      {name:"RDL",type:"Main",sets:[
+        {w:50+p,r:8,t:"Main"},{w:50+p,r:8,t:"Main"}]}
+    ];
+  }
+
+  if(type==="Push"){
+    return [
+      {name:"Incline DB Press",type:"Main",sets:[
+        {w:25+p,r:10,t:"Main"},{w:25+p,r:10,t:"Main"}]},
+      {name:"Shoulder Press",type:"Main",sets:[
+        {w:30+p,r:10,t:"Main"},{w:30+p,r:10,t:"Main"}]}
+    ];
+  }
+
+  if(type==="Pull"){
+    return [
+      {name:"Lat Pulldown",type:"Main",sets:[
+        {w:50+p,r:10,t:"Main"},{w:50+p,r:10,t:"Main"}]},
+      {name:"Row",type:"Main",sets:[
+        {w:40+p,r:10,t:"Main"},{w:40+p,r:10,t:"Main"}]}
+    ];
+  }
+
+  if(type==="Legs"){
+    return [
+      {name:"Leg Press",type:"Main",sets:[
+        {w:100+p,r:12,t:"Main"},{w:100+p,r:12,t:"Main"}]}
+    ];
+  }
+}
+
+function renderWorkout(){
+  let type = days[(day-1)%5];
+  let plan = build(type);
+
+  let html = "";
+
+  plan.forEach(ex=>{
+    let completed = data.filter(d=>d.day===day && d.ex===ex.name && d.status==="done").length;
+    let total = ex.sets.length;
+
+    html += `<div class="card">
+      <div class="exercise-name">${ex.name}</div>
+      <div class="type">${ex.type}</div>
+      <div class="progress"><div class="progress-bar" style="width:${(completed/total)*100}%"></div></div>`;
+
+    ex.sets.forEach((s,i)=>{
+      let entry = data.find(d=>d.day===day && d.ex===ex.name && d.set===i);
+      let cls = entry ? entry.status : "";
+
+      html += `<div class="set ${cls}">
+        <div>${s.w}kg × ${s.r} (${s.t})</div>
+        <div>
+          <button onclick="log('${ex.name}',${i},${s.w},'done')">✓</button>
+          <button onclick="log('${ex.name}',${i},${s.w},'mid')">~</button>
+          <button onclick="log('${ex.name}',${i},${s.w},'fail')">✕</button>
+        </div>
+      </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  document.getElementById("workout").innerHTML = html;
+  document.getElementById("dayNum").innerText = day;
+}
+
+function log(ex,set,w,status){
+  data.push({day,ex,set,w,status});
+  localStorage.setItem("data", JSON.stringify(data));
+  renderWorkout();
+}
+
+function nextDay(){ day++; localStorage.setItem("day", day); renderWorkout(); }
+function prevDay(){ if(day>1){day--; localStorage.setItem("day", day); renderWorkout();}}
+
+function showTab(tab){
   ["workout","diet","dashboard"].forEach(t=>{
     document.getElementById(t).style.display="none";
   });
   document.getElementById(tab).style.display="block";
 }
 
-// WORKOUT
-function workout(){
-  let html = `<div class="card"><h3>Day ${day}</h3>`;
-
-  let weight = 30 + (Math.floor(day/5)*2.5);
-
-  for(let i=1;i<=5;i++){
-    html += `
-    <div class="set">
-      <span>${weight}kg × ${[10,5,8,6,5][i-1]}</span>
-      <div>
-        <button class="done" onclick="log(${weight},'done')">✓</button>
-        <button class="mid" onclick="log(${weight},'mid')">~</button>
-        <button class="fail" onclick="log(${weight},'fail')">✕</button>
-      </div>
-    </div>`;
-  }
-
-  html += `<button onclick="nextDay()">Next Day</button></div>`;
-  document.getElementById("workout").innerHTML = html;
-}
-
-function log(w,s){
-  data.push({day,w,s});
-  localStorage.setItem("data", JSON.stringify(data));
-}
-
-function nextDay(){
-  day++;
-  localStorage.setItem("day", day);
-  workout();
-}
-
 // DIET
-function diet(){
+function renderDiet(){
   document.getElementById("diet").innerHTML = `
   <div class="card">
   <input id="cal" placeholder="Calories">
@@ -107,22 +209,18 @@ function addMeal(){
 }
 
 // DASHBOARD
-function dashboard(){
+function renderDashboard(){
   let c = meals.reduce((a,b)=>a+Number(b.c||0),0);
   let p = meals.reduce((a,b)=>a+Number(b.p||0),0);
 
   document.getElementById("dashboard").innerHTML = `
-  <div class="card">
-  Calories: ${c}<br>
-  Protein: ${p}
-  </div>`;
+  <div class="card">Calories: ${c}<br>Protein: ${p}</div>`;
 }
 
-workout();
-diet();
-dashboard();
+renderWorkout();
+renderDiet();
+renderDashboard();
 
-// SERVICE WORKER
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
