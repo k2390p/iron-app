@@ -2,65 +2,85 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Elite 100</title>
-<link rel="manifest" href="manifest.json">
+<title>ELITE</title>
 
 <style>
 body {
   margin:0;
   font-family:-apple-system;
-  background:#000;
   color:white;
+  background:#000;
 }
 
 .screen { display:none; }
 .active { display:block; }
 
-header { padding:20px; font-size:22px; font-weight:600; }
+.hero {
+  height:220px;
+  background-size:cover;
+  background-position:center;
+  display:flex;
+  align-items:flex-end;
+  padding:20px;
+  font-size:28px;
+  font-weight:700;
+}
+
+.overlay {
+  background:linear-gradient(180deg,transparent,black);
+  width:100%;
+  padding:10px;
+}
 
 .btn {
   background:#00ffcc;
   color:black;
-  padding:12px;
+  padding:14px;
   border-radius:12px;
-  text-align:center;
   margin:15px;
+  text-align:center;
 }
 
 .card {
   background:#121212;
   margin:12px;
   padding:16px;
-  border-radius:18px;
+  border-radius:16px;
 }
 
 .set {
-  display:flex;
-  justify-content:space-between;
+  background:#1c1c1c;
   padding:14px;
   margin-top:10px;
   border-radius:12px;
-  background:#1c1c1c;
 }
 
-/* Focus */
+/* FOCUS */
 #focus {
   position:fixed;
   top:0;
   left:0;
   width:100%;
   height:100%;
-  background:black;
+  background-size:cover;
+  background-position:center;
   display:none;
   text-align:center;
-  padding-top:35%;
+  padding-top:30%;
 }
-.big { font-size:60px; font-weight:700; }
 
-#hero {
-  height:140px;
-  margin:12px;
-  border-radius:16px;
+.big { font-size:64px; font-weight:800; }
+
+.circle {
+  width:120px;
+  height:120px;
+  border-radius:50%;
+  border:6px solid #00ffcc;
+  margin:20px auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px;
 }
 </style>
 </head>
@@ -69,54 +89,44 @@ header { padding:20px; font-size:22px; font-weight:600; }
 
 <!-- HOME -->
 <div id="home" class="screen active">
-  <header>Elite System</header>
+  <div class="hero" style="background-image:url('https://images.unsplash.com/photo-1558611848-73f7eb4001a1')">
+    <div class="overlay">ELITE TRAINING</div>
+  </div>
+
   <div class="card">
     Day <span id="day"></span>
     <div class="btn" onclick="goWorkout()">Start Workout</div>
-    <div class="btn" onclick="goDiet()">Diet</div>
   </div>
 </div>
 
 <!-- WORKOUT -->
 <div id="workout" class="screen">
-  <header onclick="goHome()">← Workout</header>
-  <div id="hero"></div>
+  <div id="hero2" class="hero"></div>
   <div id="list"></div>
 </div>
 
 <!-- FOCUS -->
 <div id="focus">
   <div id="f-ex"></div>
+  <div id="f-set"></div>
   <div class="big" id="f-w"></div>
   <div id="f-r"></div>
-  <div id="timer"></div>
+
+  <div class="circle" id="timerCircle">60</div>
+
   <div class="btn" onclick="completeSet()">Done</div>
   <div class="btn" onclick="exitFocus()">Exit</div>
-</div>
-
-<!-- DIET -->
-<div id="diet" class="screen">
-  <header onclick="goHome()">← Diet</header>
-  <div class="card">
-    <input id="cal" placeholder="Calories">
-    <input id="prot" placeholder="Protein">
-    <div class="btn" onclick="addMeal()">Add</div>
-  </div>
 </div>
 
 <script>
 let day = parseInt(localStorage.getItem("day")) || 1;
 let data = JSON.parse(localStorage.getItem("data")) || [];
-let meals = JSON.parse(localStorage.getItem("meals")) || [];
+
+const days = ["Upper","Lower","Push","Pull","Legs"];
 
 function show(s){
   document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"));
   document.getElementById(s).classList.add("active");
-}
-
-function goHome(){
-  show("home");
-  document.getElementById("day").innerText = day;
 }
 
 function goWorkout(){
@@ -124,31 +134,16 @@ function goWorkout(){
   renderWorkout();
 }
 
-function goDiet(){ show("diet"); }
-
 function week(){ return Math.floor((day-1)/5); }
 function prog(){ return week()*2.5; }
 
-const days = ["Upper","Lower","Push","Pull","Legs"];
-
 function build(type){
   let p = prog();
-
-  if(type==="Push"){
-    return [{name:"Incline DB Press",sets:[{w:25+p,r:10},{w:25+p,r:10},{w:25+p,r:10}]}];
-  }
-  if(type==="Pull"){
-    return [{name:"Lat Pulldown",sets:[{w:50+p,r:10},{w:50+p,r:10},{w:50+p,r:10}]}];
-  }
-  if(type==="Legs"){
-    return [{name:"Leg Press",sets:[{w:100+p,r:12},{w:100+p,r:12}]}];
-  }
-  if(type==="Upper"){
-    return [{name:"Bench Press",sets:[{w:15,r:10},{w:20,r:5},{w:30+p,r:8},{w:30+p,r:6}]}];
-  }
-  if(type==="Lower"){
-    return [{name:"Squat",sets:[{w:30,r:10},{w:40,r:5},{w:60+p,r:8},{w:60+p,r:6}]}];
-  }
+  return [
+    {name:"Bench Press",sets:[
+      {w:15,r:10},{w:20,r:5},{w:30+p,r:8},{w:30+p,r:6}
+    ]}
+  ];
 }
 
 function getImage(type){
@@ -160,11 +155,11 @@ function getImage(type){
 
 function renderWorkout(){
   let type = days[(day-1)%5];
-  document.body.style.background =
-    type==="Push"?"#2b0b0b":type==="Pull"?"#0b1a2b":type==="Legs"?"#0b2b1a":"#000";
 
-  document.getElementById("hero").style.background =
-    `url(${getImage(type)}) center/cover`;
+  document.getElementById("hero2").style.backgroundImage =
+    `url(${getImage(type)})`;
+  document.getElementById("hero2").innerHTML =
+    `<div class="overlay">${type} Day</div>`;
 
   let plan = build(type);
   let html="";
@@ -172,7 +167,7 @@ function renderWorkout(){
   plan.forEach(ex=>{
     html+=`<div class="card">${ex.name}`;
     ex.sets.forEach((s,i)=>{
-      html+=`<div class="set" onclick="openFocus('${ex.name}',${i},${s.w},${s.r})">
+      html+=`<div class="set" onclick="openFocus('${ex.name}',${i},${s.w},${s.r},${ex.sets.length})">
       ${s.w}kg × ${s.r}</div>`;
     });
     html+="</div>";
@@ -181,13 +176,18 @@ function renderWorkout(){
   document.getElementById("list").innerHTML = html;
 }
 
-let current=null;
-let timer=null;
+let current;
+let timer;
 
-function openFocus(ex,set,w,r){
-  current={ex,set,w,r};
+function openFocus(ex,set,w,r,total){
+  current={ex,set,w,r,total};
+
   document.getElementById("focus").style.display="block";
+  document.getElementById("focus").style.backgroundImage =
+    `url(${getImage(days[(day-1)%5])})`;
+
   document.getElementById("f-ex").innerText=ex;
+  document.getElementById("f-set").innerText=`Set ${set+1} / ${total}`;
   document.getElementById("f-w").innerText=w+"kg";
   document.getElementById("f-r").innerText=r+" reps";
 }
@@ -200,11 +200,12 @@ function completeSet(){
 
 function startTimer(t){
   clearInterval(timer);
-  let el=document.getElementById("timer");
+  let el=document.getElementById("timerCircle");
 
   timer=setInterval(()=>{
-    el.innerText="Rest "+t+"s";
+    el.innerText=t;
     t--;
+
     if(t<0){
       clearInterval(timer);
       exitFocus();
@@ -216,22 +217,9 @@ function startTimer(t){
 function exitFocus(){
   clearInterval(timer);
   document.getElementById("focus").style.display="none";
-  document.getElementById("timer").innerText="";
 }
 
-function addMeal(){
-  meals.push({
-    c:cal.value,
-    p:prot.value
-  });
-  localStorage.setItem("meals", JSON.stringify(meals));
-}
-
-goHome();
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
+document.getElementById("day").innerText = day;
 </script>
 
 </body>
