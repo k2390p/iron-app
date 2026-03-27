@@ -1,8 +1,8 @@
 {
-  "name": "Elite 100 Day App",
+  "name": "Elite App",
   "short_name": "Elite",
   "display": "standalone",
   "start_url": ".",
-  "background_color": "#0b0b0b",
+  "background_color": "#000",
   "theme_color": "#00ffcc"
 }
