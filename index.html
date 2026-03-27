@@ -2,26 +2,21 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Elite App v1</title>
-
+<title>Elite 100</title>
 <link rel="manifest" href="manifest.json">
 
 <style>
 body {
   margin:0;
   font-family:-apple-system;
-  background:linear-gradient(180deg,#0b0b0b,#000);
+  background:#000;
   color:white;
 }
 
 .screen { display:none; }
 .active { display:block; }
 
-header {
-  padding:20px;
-  font-size:22px;
-  font-weight:600;
-}
+header { padding:20px; font-size:22px; font-weight:600; }
 
 .btn {
   background:#00ffcc;
@@ -39,9 +34,6 @@ header {
   border-radius:18px;
 }
 
-.exercise { font-size:18px; font-weight:600; }
-.type { font-size:12px; color:#aaa; }
-
 .set {
   display:flex;
   justify-content:space-between;
@@ -51,19 +43,7 @@ header {
   background:#1c1c1c;
 }
 
-.progress {
-  height:6px;
-  background:#333;
-  border-radius:10px;
-  margin-top:8px;
-}
-.bar {
-  height:6px;
-  background:#00ffcc;
-  border-radius:10px;
-}
-
-/* Focus Mode */
+/* Focus */
 #focus {
   position:fixed;
   top:0;
@@ -73,12 +53,14 @@ header {
   background:black;
   display:none;
   text-align:center;
-  padding-top:40%;
+  padding-top:35%;
 }
+.big { font-size:60px; font-weight:700; }
 
-.big {
-  font-size:60px;
-  font-weight:700;
+#hero {
+  height:140px;
+  margin:12px;
+  border-radius:16px;
 }
 </style>
 </head>
@@ -89,24 +71,27 @@ header {
 <div id="home" class="screen active">
   <header>Elite System</header>
   <div class="card">
-    <div>Day <span id="dayHome"></span></div>
+    Day <span id="day"></span>
     <div class="btn" onclick="goWorkout()">Start Workout</div>
+    <div class="btn" onclick="goDiet()">Diet</div>
   </div>
 </div>
 
 <!-- WORKOUT -->
 <div id="workout" class="screen">
   <header onclick="goHome()">← Workout</header>
-  <div id="workoutList"></div>
+  <div id="hero"></div>
+  <div id="list"></div>
 </div>
 
-<!-- FOCUS MODE -->
+<!-- FOCUS -->
 <div id="focus">
   <div id="f-ex"></div>
   <div class="big" id="f-w"></div>
   <div id="f-r"></div>
   <div id="timer"></div>
   <div class="btn" onclick="completeSet()">Done</div>
+  <div class="btn" onclick="exitFocus()">Exit</div>
 </div>
 
 <!-- DIET -->
@@ -124,17 +109,14 @@ let day = parseInt(localStorage.getItem("day")) || 1;
 let data = JSON.parse(localStorage.getItem("data")) || [];
 let meals = JSON.parse(localStorage.getItem("meals")) || [];
 
-function week(){ return Math.floor((day-1)/5); }
-function prog(){ return week()*2.5; }
-
-function show(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+function show(s){
+  document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"));
+  document.getElementById(s).classList.add("active");
 }
 
 function goHome(){
   show("home");
-  document.getElementById("dayHome").innerText = day;
+  document.getElementById("day").innerText = day;
 }
 
 function goWorkout(){
@@ -142,73 +124,105 @@ function goWorkout(){
   renderWorkout();
 }
 
-function build(){
+function goDiet(){ show("diet"); }
+
+function week(){ return Math.floor((day-1)/5); }
+function prog(){ return week()*2.5; }
+
+const days = ["Upper","Lower","Push","Pull","Legs"];
+
+function build(type){
   let p = prog();
-  return [
-    {name:"Bench Press", sets:[
-      {w:15,r:10},{w:20,r:5},{w:30+p,r:8},{w:30+p,r:6}
-    ]},
-    {name:"Row", sets:[
-      {w:40+p,r:8},{w:40+p,r:8}
-    ]}
-  ];
+
+  if(type==="Push"){
+    return [{name:"Incline DB Press",sets:[{w:25+p,r:10},{w:25+p,r:10},{w:25+p,r:10}]}];
+  }
+  if(type==="Pull"){
+    return [{name:"Lat Pulldown",sets:[{w:50+p,r:10},{w:50+p,r:10},{w:50+p,r:10}]}];
+  }
+  if(type==="Legs"){
+    return [{name:"Leg Press",sets:[{w:100+p,r:12},{w:100+p,r:12}]}];
+  }
+  if(type==="Upper"){
+    return [{name:"Bench Press",sets:[{w:15,r:10},{w:20,r:5},{w:30+p,r:8},{w:30+p,r:6}]}];
+  }
+  if(type==="Lower"){
+    return [{name:"Squat",sets:[{w:30,r:10},{w:40,r:5},{w:60+p,r:8},{w:60+p,r:6}]}];
+  }
+}
+
+function getImage(type){
+  if(type==="Push") return "https://images.unsplash.com/photo-1599058917212-d750089bc07e";
+  if(type==="Pull") return "https://images.unsplash.com/photo-1594737625785-a6cbdabd333c";
+  if(type==="Legs") return "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b";
+  return "https://images.unsplash.com/photo-1558611848-73f7eb4001a1";
 }
 
 function renderWorkout(){
-  let plan = build();
+  let type = days[(day-1)%5];
+  document.body.style.background =
+    type==="Push"?"#2b0b0b":type==="Pull"?"#0b1a2b":type==="Legs"?"#0b2b1a":"#000";
+
+  document.getElementById("hero").style.background =
+    `url(${getImage(type)}) center/cover`;
+
+  let plan = build(type);
   let html="";
 
   plan.forEach(ex=>{
-    html += `<div class="card">
-      <div class="exercise">${ex.name}</div>`;
-
+    html+=`<div class="card">${ex.name}`;
     ex.sets.forEach((s,i)=>{
-      html += `<div class="set" onclick="openFocus('${ex.name}',${i},${s.w},${s.r})">
-        ${s.w}kg × ${s.r}
-      </div>`;
+      html+=`<div class="set" onclick="openFocus('${ex.name}',${i},${s.w},${s.r})">
+      ${s.w}kg × ${s.r}</div>`;
     });
-
-    html += "</div>";
+    html+="</div>";
   });
 
-  document.getElementById("workoutList").innerHTML = html;
+  document.getElementById("list").innerHTML = html;
 }
 
-let current;
+let current=null;
+let timer=null;
 
 function openFocus(ex,set,w,r){
-  current = {ex,set,w,r};
+  current={ex,set,w,r};
   document.getElementById("focus").style.display="block";
-  document.getElementById("f-ex").innerText = ex;
-  document.getElementById("f-w").innerText = w+"kg";
-  document.getElementById("f-r").innerText = r+" reps";
+  document.getElementById("f-ex").innerText=ex;
+  document.getElementById("f-w").innerText=w+"kg";
+  document.getElementById("f-r").innerText=r+" reps";
 }
 
 function completeSet(){
   data.push({...current,day});
   localStorage.setItem("data", JSON.stringify(data));
-  startTimer();
+  startTimer(60);
 }
 
-function startTimer(){
-  let t=60;
+function startTimer(t){
+  clearInterval(timer);
   let el=document.getElementById("timer");
 
-  let int=setInterval(()=>{
+  timer=setInterval(()=>{
     el.innerText="Rest "+t+"s";
     t--;
     if(t<0){
-      clearInterval(int);
-      document.getElementById("focus").style.display="none";
+      clearInterval(timer);
+      exitFocus();
       renderWorkout();
     }
   },1000);
 }
 
+function exitFocus(){
+  clearInterval(timer);
+  document.getElementById("focus").style.display="none";
+  document.getElementById("timer").innerText="";
+}
+
 function addMeal(){
   meals.push({
-    c:document.getElementById("cal").value,
-    p:document.getElementById("prot").value
+    c:cal.value,
+    p:prot.value
   });
   localStorage.setItem("meals", JSON.stringify(meals));
 }
