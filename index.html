@@ -5,33 +5,44 @@
 <title>ELITE</title>
 
 <style>
-body {
-  margin:0;
-  font-family:-apple-system;
-  color:white;
-  background:#000;
-}
+body { margin:0; font-family:-apple-system; background:#000; color:white; }
 
+/* SCREENS */
 .screen { display:none; }
 .active { display:block; }
 
+/* SPLASH */
+#splash {
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:black;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:32px;
+  font-weight:800;
+  animation:fadeIn 1s;
+}
+
+/* HERO */
 .hero {
   height:220px;
   background-size:cover;
   background-position:center;
   display:flex;
   align-items:flex-end;
+}
+
+.overlay {
+  width:100%;
   padding:20px;
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,0.9));
   font-size:28px;
   font-weight:700;
 }
 
-.overlay {
-  background:linear-gradient(180deg,transparent,black);
-  width:100%;
-  padding:10px;
-}
-
+/* BUTTON */
 .btn {
   background:#00ffcc;
   color:black;
@@ -39,8 +50,11 @@ body {
   border-radius:12px;
   margin:15px;
   text-align:center;
+  transition:0.2s;
 }
+.btn:active { transform:scale(0.96); }
 
+/* CARD */
 .card {
   background:#121212;
   margin:12px;
@@ -48,6 +62,7 @@ body {
   border-radius:16px;
 }
 
+/* SET */
 .set {
   background:#1c1c1c;
   padding:14px;
@@ -66,33 +81,51 @@ body {
   background-position:center;
   display:none;
   text-align:center;
-  padding-top:30%;
+  padding-top:25%;
+}
+
+.focus-overlay {
+  background:linear-gradient(180deg,rgba(0,0,0,0.2),black);
+  height:100%;
+  width:100%;
+  position:absolute;
+  top:0;
+  left:0;
+}
+
+.focus-content {
+  position:relative;
+  z-index:2;
 }
 
 .big { font-size:64px; font-weight:800; }
 
-.circle {
-  width:120px;
-  height:120px;
-  border-radius:50%;
-  border:6px solid #00ffcc;
-  margin:20px auto;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:24px;
+/* TIMER */
+svg { transform:rotate(-90deg); }
+circle {
+  fill:none;
+  stroke:#00ffcc;
+  stroke-width:8;
+  stroke-dasharray:314;
+  stroke-dashoffset:0;
+  transition:1s linear;
+}
+
+@keyframes fadeIn {
+  from {opacity:0;}
+  to {opacity:1;}
 }
 </style>
 </head>
 
 <body>
 
-<!-- HOME -->
-<div id="home" class="screen active">
-  <div class="hero" style="background-image:url('https://images.unsplash.com/photo-1558611848-73f7eb4001a1')">
-    <div class="overlay">ELITE TRAINING</div>
-  </div>
+<!-- SPLASH -->
+<div id="splash">NIKE ELITE</div>
 
+<!-- HOME -->
+<div id="home" class="screen">
+  <div id="homeHero" class="hero"></div>
   <div class="card">
     Day <span id="day"></span>
     <div class="btn" onclick="goWorkout()">Start Workout</div>
@@ -101,32 +134,70 @@ body {
 
 <!-- WORKOUT -->
 <div id="workout" class="screen">
-  <div id="hero2" class="hero"></div>
+  <div id="workHero" class="hero"></div>
   <div id="list"></div>
 </div>
 
 <!-- FOCUS -->
 <div id="focus">
-  <div id="f-ex"></div>
-  <div id="f-set"></div>
-  <div class="big" id="f-w"></div>
-  <div id="f-r"></div>
+  <div class="focus-overlay"></div>
 
-  <div class="circle" id="timerCircle">60</div>
+  <div class="focus-content">
+    <div id="f-ex"></div>
+    <div id="f-set"></div>
+    <div class="big" id="f-w"></div>
+    <div id="f-r"></div>
 
-  <div class="btn" onclick="completeSet()">Done</div>
-  <div class="btn" onclick="exitFocus()">Exit</div>
+    <svg width="120" height="120">
+      <circle r="50" cx="60" cy="60" id="circle"></circle>
+    </svg>
+
+    <div class="btn" onclick="completeSet()">Done</div>
+    <div class="btn" onclick="exitFocus()">Exit</div>
+  </div>
 </div>
 
 <script>
 let day = parseInt(localStorage.getItem("day")) || 1;
 let data = JSON.parse(localStorage.getItem("data")) || [];
-
 const days = ["Upper","Lower","Push","Pull","Legs"];
+
+const images = {
+  home:[
+    "https://images.unsplash.com/photo-1558611848-73f7eb4001a1",
+    "https://images.unsplash.com/photo-1599058917212-d750089bc07e"
+  ],
+  Push:"https://images.unsplash.com/photo-1599058917212-d750089bc07e",
+  Pull:"https://images.unsplash.com/photo-1594737625785-a6cbdabd333c",
+  Legs:"https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b",
+  Upper:"https://images.unsplash.com/photo-1558611848-73f7eb4001a1",
+  Lower:"https://images.unsplash.com/photo-1558611848-73f7eb4001a1"
+};
+
+/* SPLASH */
+setTimeout(()=>{
+  document.getElementById("splash").style.display="none";
+  show("home");
+  initHome();
+},1500);
 
 function show(s){
   document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"));
   document.getElementById(s).classList.add("active");
+}
+
+function initHome(){
+  document.getElementById("day").innerText = day;
+  rotateHomeImages();
+}
+
+function rotateHomeImages(){
+  let i=0;
+  setInterval(()=>{
+    document.getElementById("homeHero").style.backgroundImage =
+      `url(${images.home[i%images.home.length]})`;
+    i++;
+  },3000);
 }
 
 function goWorkout(){
@@ -137,31 +208,20 @@ function goWorkout(){
 function week(){ return Math.floor((day-1)/5); }
 function prog(){ return week()*2.5; }
 
-function build(type){
-  let p = prog();
-  return [
-    {name:"Bench Press",sets:[
-      {w:15,r:10},{w:20,r:5},{w:30+p,r:8},{w:30+p,r:6}
-    ]}
-  ];
-}
-
-function getImage(type){
-  if(type==="Push") return "https://images.unsplash.com/photo-1599058917212-d750089bc07e";
-  if(type==="Pull") return "https://images.unsplash.com/photo-1594737625785-a6cbdabd333c";
-  if(type==="Legs") return "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b";
-  return "https://images.unsplash.com/photo-1558611848-73f7eb4001a1";
+function build(){
+  let p=prog();
+  return [{name:"Bench Press",sets:[
+    {w:15,r:10},{w:20,r:5},{w:30+p,r:8},{w:30+p,r:6}
+  ]}];
 }
 
 function renderWorkout(){
   let type = days[(day-1)%5];
 
-  document.getElementById("hero2").style.backgroundImage =
-    `url(${getImage(type)})`;
-  document.getElementById("hero2").innerHTML =
-    `<div class="overlay">${type} Day</div>`;
+  document.getElementById("workHero").style.backgroundImage =
+    `url(${images[type]})`;
 
-  let plan = build(type);
+  let plan = build();
   let html="";
 
   plan.forEach(ex=>{
@@ -176,18 +236,20 @@ function renderWorkout(){
   document.getElementById("list").innerHTML = html;
 }
 
+/* FOCUS */
 let current;
 let timer;
+let totalTime = 60;
 
 function openFocus(ex,set,w,r,total){
   current={ex,set,w,r,total};
 
   document.getElementById("focus").style.display="block";
   document.getElementById("focus").style.backgroundImage =
-    `url(${getImage(days[(day-1)%5])})`;
+    `url(${images[days[(day-1)%5]]})`;
 
   document.getElementById("f-ex").innerText=ex;
-  document.getElementById("f-set").innerText=`Set ${set+1} / ${total}`;
+  document.getElementById("f-set").innerText=`Set ${set+1}/${total}`;
   document.getElementById("f-w").innerText=w+"kg";
   document.getElementById("f-r").innerText=r+" reps";
 }
@@ -195,15 +257,16 @@ function openFocus(ex,set,w,r,total){
 function completeSet(){
   data.push({...current,day});
   localStorage.setItem("data", JSON.stringify(data));
-  startTimer(60);
+  startTimer(totalTime);
 }
 
 function startTimer(t){
   clearInterval(timer);
-  let el=document.getElementById("timerCircle");
+  let circle=document.getElementById("circle");
 
   timer=setInterval(()=>{
-    el.innerText=t;
+    let offset = 314 - (314 * t / totalTime);
+    circle.style.strokeDashoffset = offset;
     t--;
 
     if(t<0){
@@ -218,8 +281,6 @@ function exitFocus(){
   clearInterval(timer);
   document.getElementById("focus").style.display="none";
 }
-
-document.getElementById("day").innerText = day;
 </script>
 
 </body>
