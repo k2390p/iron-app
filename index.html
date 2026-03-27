@@ -6,15 +6,13 @@
 
 <style>
 body { margin:0; font-family:-apple-system; background:#000; color:white; }
-
 .screen { display:none; }
 .active { display:block; }
 
 /* SPLASH */
 #splash {
   position:fixed;
-  width:100%;
-  height:100%;
+  width:100%; height:100%;
   background:black;
   display:flex;
   align-items:center;
@@ -32,7 +30,6 @@ body { margin:0; font-family:-apple-system; background:#000; color:white; }
   display:flex;
   align-items:flex-end;
 }
-
 .overlay {
   width:100%;
   padding:20px;
@@ -41,7 +38,7 @@ body { margin:0; font-family:-apple-system; background:#000; color:white; }
   font-weight:700;
 }
 
-/* BUTTON */
+/* UI */
 .btn {
   background:#00ffcc;
   color:black;
@@ -50,16 +47,12 @@ body { margin:0; font-family:-apple-system; background:#000; color:white; }
   margin:15px;
   text-align:center;
 }
-.btn:active { transform:scale(0.95); }
-
-/* CARD */
 .card {
   background:#121212;
   margin:12px;
   padding:16px;
   border-radius:16px;
 }
-
 .set {
   background:#1c1c1c;
   padding:14px;
@@ -70,26 +63,20 @@ body { margin:0; font-family:-apple-system; background:#000; color:white; }
 /* FOCUS */
 #focus {
   position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
+  top:0; left:0;
+  width:100%; height:100%;
   background-size:cover;
   background-position:center;
   display:none;
   text-align:center;
   padding-top:25%;
 }
-
 .focus-overlay {
   position:absolute;
-  width:100%;
-  height:100%;
+  width:100%; height:100%;
   background:linear-gradient(180deg,rgba(0,0,0,0.3),black);
 }
-
 .focus-content { position:relative; z-index:2; }
-
 .big { font-size:64px; font-weight:800; }
 
 /* TIMER */
@@ -107,7 +94,7 @@ circle {
 
 <body>
 
-<div id="splash">ELITE</div>
+<div id="splash">NIKE ELITE</div>
 
 <!-- HOME -->
 <div id="home" class="screen">
@@ -120,18 +107,32 @@ circle {
 
 <!-- WORKOUT -->
 <div id="workout" class="screen">
+  <div style="padding:15px; display:flex; justify-content:space-between;">
+    <div onclick="goHome()">←</div>
+    <div>NIKE ELITE</div>
+    <div></div>
+  </div>
+
   <div id="workHero" class="hero"></div>
+
+  <div style="display:flex; justify-content:space-between; padding:10px;">
+    <div onclick="prevDay()">◀ Prev</div>
+    <div onclick="nextDay()">Next ▶</div>
+  </div>
+
   <div id="list"></div>
 </div>
 
 <!-- FOCUS -->
 <div id="focus">
   <div class="focus-overlay"></div>
+
   <div class="focus-content">
     <div id="f-ex"></div>
     <div id="f-set"></div>
     <div class="big" id="f-w"></div>
     <div id="f-r"></div>
+    <div id="timerText"></div>
 
     <svg width="120" height="120">
       <circle r="50" cx="60" cy="60" id="circle"></circle>
@@ -145,9 +146,9 @@ circle {
 <script>
 let day = parseInt(localStorage.getItem("day")) || 1;
 let data = JSON.parse(localStorage.getItem("data")) || [];
-
 const days = ["Upper","Lower","Push","Pull","Legs"];
 
+/* DYNAMIC IMAGES */
 const images = {
   home:[
     "https://images.unsplash.com/photo-1558611848-73f7eb4001a1",
@@ -157,7 +158,12 @@ const images = {
   Pull:"https://images.unsplash.com/photo-1594737625785-a6cbdabd333c",
   Legs:"https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b",
   Upper:"https://images.unsplash.com/photo-1558611848-73f7eb4001a1",
-  Lower:"https://images.unsplash.com/photo-1558611848-73f7eb4001a1"
+  Lower:"https://images.unsplash.com/photo-1579758629938-03607ccdbaba",
+
+  chest:"https://images.unsplash.com/photo-1583454110551-21f2fa2afe61",
+  back:"https://images.unsplash.com/photo-1605296867304-46d5465a13f1",
+  legs:"https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b",
+  arms:"https://images.unsplash.com/photo-1583454110551-21f2fa2afe61"
 };
 
 /* SPLASH */
@@ -172,12 +178,16 @@ function show(s){
   document.getElementById(s).classList.add("active");
 }
 
-function initHome(){
-  document.getElementById("day").innerText = day;
-  rotateHomeImages();
+function goHome(){
+  show("home");
 }
 
-function rotateHomeImages(){
+function initHome(){
+  document.getElementById("day").innerText = day;
+  rotateHome();
+}
+
+function rotateHome(){
   let i=0;
   setInterval(()=>{
     document.getElementById("homeHero").style.backgroundImage =
@@ -185,6 +195,9 @@ function rotateHomeImages(){
     i++;
   },3000);
 }
+
+function nextDay(){ if(day<100){day++; localStorage.setItem("day",day); renderWorkout();}}
+function prevDay(){ if(day>1){day--; localStorage.setItem("day",day); renderWorkout();}}
 
 function goWorkout(){
   show("workout");
@@ -195,7 +208,7 @@ function goWorkout(){
 function week(){ return Math.floor((day-1)/5); }
 function prog(){ return week()*2.5; }
 
-/* FULL ELITE PLAN */
+/* FULL PLAN */
 function build(type){
   let p = prog();
 
@@ -207,7 +220,6 @@ function build(type){
       {name:"Bicep Curl",sets:[{w:10,r:12},{w:10,r:12},{w:10,r:12}]}
     ];
   }
-
   if(type==="Lower"){
     return [
       {name:"Squat",sets:[{w:30,r:10},{w:40,r:5},{w:60+p,r:8},{w:60+p,r:6},{w:60+p,r:5}]},
@@ -215,7 +227,6 @@ function build(type){
       {name:"Leg Curl",sets:[{w:30,r:12},{w:30,r:12},{w:30,r:12}]}
     ];
   }
-
   if(type==="Push"){
     return [
       {name:"Incline DB Press",sets:[{w:25+p,r:10},{w:25+p,r:10},{w:25+p,r:10},{w:25+p,r:10}]},
@@ -224,7 +235,6 @@ function build(type){
       {name:"Tricep Pushdown",sets:[{w:25,r:12},{w:25,r:12},{w:25,r:12}]}
     ];
   }
-
   if(type==="Pull"){
     return [
       {name:"Lat Pulldown",sets:[{w:50+p,r:10},{w:50+p,r:10},{w:50+p,r:10},{w:50+p,r:10}]},
@@ -233,7 +243,6 @@ function build(type){
       {name:"Bicep Curl",sets:[{w:10,r:12},{w:10,r:12},{w:10,r:12}]}
     ];
   }
-
   if(type==="Legs"){
     return [
       {name:"Leg Press",sets:[{w:100+p,r:12},{w:100+p,r:12},{w:100+p,r:12},{w:100+p,r:12}]},
@@ -243,14 +252,11 @@ function build(type){
   }
 }
 
+/* WORKOUT RENDER */
 function renderWorkout(){
   let type = days[(day-1)%5];
-
-  document.getElementById("workHero").style.backgroundImage =
-    `url(${images[type]})`;
-
-  document.getElementById("workHero").innerHTML =
-    `<div class="overlay">${type} Day</div>`;
+  document.getElementById("workHero").style.backgroundImage = `url(${images[type]})`;
+  document.getElementById("workHero").innerHTML = `<div class="overlay">${type} Day</div>`;
 
   let plan = build(type);
   let html="";
@@ -272,12 +278,18 @@ let current;
 let timer;
 let totalTime = 60;
 
+function getExerciseImage(name){
+  if(name.includes("Press")) return images.chest;
+  if(name.includes("Row") || name.includes("Pull")) return images.back;
+  if(name.includes("Squat") || name.includes("Leg")) return images.legs;
+  return images.arms;
+}
+
 function openFocus(ex,set,w,r,total){
   current={ex,set,w,r,total};
 
   document.getElementById("focus").style.display="block";
-  document.getElementById("focus").style.backgroundImage =
-    `url(${images[days[(day-1)%5]]})`;
+  document.getElementById("focus").style.backgroundImage = `url(${getExerciseImage(ex)})`;
 
   document.getElementById("f-ex").innerText=ex;
   document.getElementById("f-set").innerText=`Set ${set+1}/${total}`;
@@ -285,6 +297,26 @@ function openFocus(ex,set,w,r,total){
   document.getElementById("f-r").innerText=r+" reps";
 }
 
+/* NEXT SET */
+function getNextSet(){
+  let type = days[(day-1)%5];
+  let plan = build(type);
+
+  for(let i=0;i<plan.length;i++){
+    for(let j=0;j<plan[i].sets.length;j++){
+      if(plan[i].name===current.ex && j===current.set){
+        if(j+1 < plan[i].sets.length){
+          return {ex:plan[i].name,set:j+1,w:plan[i].sets[j+1].w,r:plan[i].sets[j+1].r,total:plan[i].sets.length};
+        } else if(i+1 < plan.length){
+          return {ex:plan[i+1].name,set:0,w:plan[i+1].sets[0].w,r:plan[i+1].sets[0].r,total:plan[i+1].sets.length};
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/* TIMER */
 function completeSet(){
   data.push({...current,day});
   localStorage.setItem("data", JSON.stringify(data));
@@ -294,16 +326,30 @@ function completeSet(){
 function startTimer(t){
   clearInterval(timer);
   let circle=document.getElementById("circle");
+  let next = getNextSet();
+
+  if(next){
+    document.getElementById("f-set").innerText =
+      `Next: ${next.ex} | Set ${next.set+1}/${next.total}`;
+  }
 
   timer=setInterval(()=>{
+    document.getElementById("timerText").innerText = t + "s";
+
     let offset = 314 - (314 * t / totalTime);
     circle.style.strokeDashoffset = offset;
+
     t--;
 
     if(t<0){
       clearInterval(timer);
-      exitFocus();
-      renderWorkout();
+
+      if(next){
+        openFocus(next.ex,next.set,next.w,next.r,next.total);
+      } else {
+        exitFocus();
+        renderWorkout();
+      }
     }
   },1000);
 }
