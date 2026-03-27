@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elite App v1</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+body {
+  margin:0;
+  font-family:-apple-system;
+  background:linear-gradient(180deg,#0b0b0b,#000);
+  color:white;
+}
+
+.screen { display:none; }
+.active { display:block; }
+
+header {
+  padding:20px;
+  font-size:22px;
+  font-weight:600;
+}
+
+.btn {
+  background:#00ffcc;
+  color:black;
+  padding:12px;
+  border-radius:12px;
+  text-align:center;
+  margin:15px;
+}
+
+.card {
+  background:#121212;
+  margin:12px;
+  padding:16px;
+  border-radius:18px;
+}
+
+.exercise { font-size:18px; font-weight:600; }
+.type { font-size:12px; color:#aaa; }
+
+.set {
+  display:flex;
+  justify-content:space-between;
+  padding:14px;
+  margin-top:10px;
+  border-radius:12px;
+  background:#1c1c1c;
+}
+
+.progress {
+  height:6px;
+  background:#333;
+  border-radius:10px;
+  margin-top:8px;
+}
+.bar {
+  height:6px;
+  background:#00ffcc;
+  border-radius:10px;
+}
+
+/* Focus Mode */
+#focus {
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:black;
+  display:none;
+  text-align:center;
+  padding-top:40%;
+}
+
+.big {
+  font-size:60px;
+  font-weight:700;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <header>Elite System</header>
+  <div class="card">
+    <div>Day <span id="dayHome"></span></div>
+    <div class="btn" onclick="goWorkout()">Start Workout</div>
+  </div>
+</div>
+
+<!-- WORKOUT -->
+<div id="workout" class="screen">
+  <header onclick="goHome()">← Workout</header>
+  <div id="workoutList"></div>
+</div>
+
+<!-- FOCUS MODE -->
+<div id="focus">
+  <div id="f-ex"></div>
+  <div class="big" id="f-w"></div>
+  <div id="f-r"></div>
+  <div id="timer"></div>
+  <div class="btn" onclick="completeSet()">Done</div>
+</div>
+
+<!-- DIET -->
+<div id="diet" class="screen">
+  <header onclick="goHome()">← Diet</header>
+  <div class="card">
+    <input id="cal" placeholder="Calories">
+    <input id="prot" placeholder="Protein">
+    <div class="btn" onclick="addMeal()">Add</div>
+  </div>
+</div>
+
+<script>
+let day = parseInt(localStorage.getItem("day")) || 1;
+let data = JSON.parse(localStorage.getItem("data")) || [];
+let meals = JSON.parse(localStorage.getItem("meals")) || [];
+
+function week(){ return Math.floor((day-1)/5); }
+function prog(){ return week()*2.5; }
+
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function goHome(){
+  show("home");
+  document.getElementById("dayHome").innerText = day;
+}
+
+function goWorkout(){
+  show("workout");
+  renderWorkout();
+}
+
+function build(){
+  let p = prog();
+  return [
+    {name:"Bench Press", sets:[
+      {w:15,r:10},{w:20,r:5},{w:30+p,r:8},{w:30+p,r:6}
+    ]},
+    {name:"Row", sets:[
+      {w:40+p,r:8},{w:40+p,r:8}
+    ]}
+  ];
+}
+
+function renderWorkout(){
+  let plan = build();
+  let html="";
+
+  plan.forEach(ex=>{
+    html += `<div class="card">
+      <div class="exercise">${ex.name}</div>`;
+
+    ex.sets.forEach((s,i)=>{
+      html += `<div class="set" onclick="openFocus('${ex.name}',${i},${s.w},${s.r})">
+        ${s.w}kg × ${s.r}
+      </div>`;
+    });
+
+    html += "</div>";
+  });
+
+  document.getElementById("workoutList").innerHTML = html;
+}
+
+let current;
+
+function openFocus(ex,set,w,r){
+  current = {ex,set,w,r};
+  document.getElementById("focus").style.display="block";
+  document.getElementById("f-ex").innerText = ex;
+  document.getElementById("f-w").innerText = w+"kg";
+  document.getElementById("f-r").innerText = r+" reps";
+}
+
+function completeSet(){
+  data.push({...current,day});
+  localStorage.setItem("data", JSON.stringify(data));
+  startTimer();
+}
+
+function startTimer(){
+  let t=60;
+  let el=document.getElementById("timer");
+
+  let int=setInterval(()=>{
+    el.innerText="Rest "+t+"s";
+    t--;
+    if(t<0){
+      clearInterval(int);
+      document.getElementById("focus").style.display="none";
+      renderWorkout();
+    }
+  },1000);
+}
+
+function addMeal(){
+  meals.push({
+    c:document.getElementById("cal").value,
+    p:document.getElementById("prot").value
+  });
+  localStorage.setItem("meals", JSON.stringify(meals));
+}
+
+goHome();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+</body>
+</html>
