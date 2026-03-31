@@ -16,8 +16,9 @@ body { margin:0; font-family:-apple-system; background:#000; color:white; }
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:32px;
-  font-weight:800;
+  font-size:34px;
+  font-weight:900;
+  letter-spacing:2px;
 }
 
 .hero {
@@ -69,7 +70,7 @@ body { margin:0; font-family:-apple-system; background:#000; color:white; }
 .focus-overlay {
   position:absolute;
   width:100%; height:100%;
-  background:linear-gradient(180deg,rgba(0,0,0,0.3),black);
+  background:linear-gradient(180deg,rgba(0,0,0,0.4),black);
 }
 
 .focus-content {
@@ -96,7 +97,9 @@ circle {
 <div id="splash">NIKE ELITE</div>
 
 <div id="home" class="screen">
-  <div id="homeHero" class="hero"></div>
+  <div class="hero" style="background-image:url('https://images.unsplash.com/photo-1558611848-73f7eb4001a1')">
+    <div class="overlay">TRAIN ELITE</div>
+  </div>
   <div class="card">
     Day <span id="day"></span>
     <div class="btn" onclick="goWorkout()">Start Workout</div>
@@ -141,211 +144,237 @@ circle {
 <script>
 let day = parseInt(localStorage.getItem("day")) || 1;
 let data = JSON.parse(localStorage.getItem("data")) || [];
-const days_cycle = ["Upper","Lower","Push","Pull","Legs","Rest"];
-
-const images = {
-  home:[
-    "https://images.unsplash.com/photo-1558611848-73f7eb4001a1",
-    "https://images.unsplash.com/photo-1599058917212-d750089bc07e"
-  ],
-  chest:"https://images.unsplash.com/photo-1583454110551-21f2fa2afe61",
-  back:"https://images.unsplash.com/photo-1605296867304-46d5465a13f1",
-  legs:"https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b",
-  arms:"https://images.unsplash.com/photo-1583454110551-21f2fa2afe61"
-};
+const cycle = ["Upper","Lower","Push","Pull","Legs","Rest"];
 
 const PLAN = {};
 
 function generatePlan(){
-  for(let d=1; d<=100; d++){
-    let type = days_cycle[(d-1)%6];
-    let prog = Math.floor((d-1)/6)*2.5;
+for(let d=1; d<=100; d++){
+let type = cycle[(d-1)%6];
+let prog = Math.floor((d-1)/6)*2.5;
 
-    if(type==="Rest"){
-      PLAN[d]={type:"Rest",exercises:[]};
-      continue;
-    }
+if(type==="Rest"){ PLAN[d]={type,exercises:[]}; continue; }
 
-    if(type==="Upper"){
-      PLAN[d]={type,exercises:[
-        {name:"Bench Press",sets:[
-          {w:20,r:10,t:"Warm-up"},
-          {w:40,r:5,t:"Warm-up"},
-          {w:60+prog,r:8,t:"Main"},
-          {w:60+prog,r:6,t:"Main"},
-          {w:60+prog,r:5,t:"Main"}]},
-        {name:"Barbell Row",sets:Array(4).fill({w:55+prog,r:8,t:"Main"})},
-        {name:"Overhead Press",sets:Array(3).fill({w:35+prog,r:6,t:"Main"})},
-        {name:"Bicep Curl",sets:Array(3).fill({w:15,r:12,t:"Accessory"})}
-      ]};
-    }
+if(type==="Upper"){
+PLAN[d]={type,exercises:[
+{name:"Bench Press",sets:[
+{w:20,r:10,t:"Warm-up"},
+{w:40,r:5,t:"Warm-up"},
+{w:60+prog,r:8,t:"Main"},
+{w:60+prog,r:6,t:"Main"},
+{w:60+prog,r:5,t:"Main"}]},
+{name:"Barbell Row",sets:[
+{w:40,r:8,t:"Warm-up"},
+{w:55+prog,r:8,t:"Main"},
+{w:55+prog,r:8,t:"Main"},
+{w:55+prog,r:8,t:"Main"}]},
+{name:"Overhead Press",sets:[
+{w:25,r:8,t:"Warm-up"},
+{w:35+prog,r:6,t:"Main"},
+{w:35+prog,r:6,t:"Main"}]},
+{name:"Bicep Curl",sets:[
+{w:12.5,r:12,t:"Accessory"},
+{w:12.5,r:12,t:"Accessory"},
+{w:12.5,r:12,t:"Accessory"}]}
+]};
+}
 
-    if(type==="Lower"){
-      PLAN[d]={type,exercises:[
-        {name:"Squat",sets:[
-          {w:40,r:8,t:"Warm-up"},
-          {w:60,r:5,t:"Warm-up"},
-          {w:80+prog,r:8,t:"Main"},
-          {w:80+prog,r:6,t:"Main"},
-          {w:80+prog,r:5,t:"Main"}]},
-        {name:"RDL",sets:Array(3).fill({w:70+prog,r:8,t:"Main"})},
-        {name:"Leg Curl",sets:Array(3).fill({w:30,r:12,t:"Accessory"})}
-      ]};
-    }
+if(type==="Lower"){
+PLAN[d]={type,exercises:[
+{name:"Squat",sets:[
+{w:40,r:8,t:"Warm-up"},
+{w:60,r:5,t:"Warm-up"},
+{w:80+prog,r:8,t:"Main"},
+{w:80+prog,r:6,t:"Main"},
+{w:80+prog,r:5,t:"Main"}]},
+{name:"RDL",sets:[
+{w:50,r:8,t:"Warm-up"},
+{w:70+prog,r:8,t:"Main"},
+{w:70+prog,r:8,t:"Main"}]},
+{name:"Leg Curl",sets:[
+{w:30,r:12,t:"Accessory"},
+{w:30,r:12,t:"Accessory"},
+{w:30,r:12,t:"Accessory"}]}
+]};
+}
 
-    if(type==="Push"){
-      PLAN[d]={type,exercises:[
-        {name:"Incline DB Press",sets:Array(4).fill({w:30+prog,r:10,t:"Main"})},
-        {name:"Shoulder Press",sets:Array(3).fill({w:35+prog,r:8,t:"Main"})},
-        {name:"Lateral Raise",sets:Array(3).fill({w:10,r:15,t:"Accessory"})},
-        {name:"Tricep Pushdown",sets:Array(3).fill({w:25,r:12,t:"Accessory"})}
-      ]};
-    }
+if(type==="Push"){
+PLAN[d]={type,exercises:[
+{name:"Incline DB Press",sets:[
+{w:20,r:10,t:"Warm-up"},
+{w:25,r:6,t:"Warm-up"},
+{w:27.5+prog,r:8,t:"Main"},
+{w:27.5+prog,r:8,t:"Main"},
+{w:27.5+prog,r:6,t:"Main"}]},
+{name:"Shoulder Press",sets:[
+{w:25,r:8,t:"Warm-up"},
+{w:35+prog,r:8,t:"Main"},
+{w:35+prog,r:8,t:"Main"}]},
+{name:"Lateral Raise",sets:[
+{w:8,r:15,t:"Accessory"},
+{w:8,r:15,t:"Accessory"},
+{w:8,r:15,t:"Accessory"}]},
+{name:"Tricep Pushdown",sets:[
+{w:25,r:12,t:"Accessory"},
+{w:25,r:12,t:"Accessory"},
+{w:25,r:12,t:"Accessory"}]}
+]};
+}
 
-    if(type==="Pull"){
-      PLAN[d]={type,exercises:[
-        {name:"Lat Pulldown",sets:Array(4).fill({w:60+prog,r:10,t:"Main"})},
-        {name:"Seated Row",sets:Array(3).fill({w:50+prog,r:10,t:"Main"})},
-        {name:"Face Pull",sets:Array(3).fill({w:20,r:15,t:"Accessory"})},
-        {name:"Bicep Curl",sets:Array(3).fill({w:15,r:12,t:"Accessory"})}
-      ]};
-    }
+if(type==="Pull"){
+PLAN[d]={type,exercises:[
+{name:"Lat Pulldown",sets:[
+{w:40,r:12,t:"Warm-up"},
+{w:50,r:8,t:"Warm-up"},
+{w:60+prog,r:10,t:"Main"},
+{w:60+prog,r:10,t:"Main"},
+{w:60+prog,r:10,t:"Main"}]},
+{name:"Seated Row",sets:[
+{w:40,r:10,t:"Warm-up"},
+{w:50+prog,r:10,t:"Main"},
+{w:50+prog,r:10,t:"Main"}]},
+{name:"Face Pull",sets:[
+{w:20,r:15,t:"Accessory"},
+{w:20,r:15,t:"Accessory"},
+{w:20,r:15,t:"Accessory"}]},
+{name:"Bicep Curl",sets:[
+{w:12.5,r:12,t:"Accessory"},
+{w:12.5,r:12,t:"Accessory"},
+{w:12.5,r:12,t:"Accessory"}]}
+]};
+}
 
-    if(type==="Legs"){
-      PLAN[d]={type,exercises:[
-        {name:"Leg Press",sets:Array(4).fill({w:120+prog,r:12,t:"Main"})},
-        {name:"Walking Lunges",sets:Array(3).fill({w:20,r:12,t:"Accessory"})},
-        {name:"RDL",sets:Array(3).fill({w:70+prog,r:10,t:"Main"})}
-      ]};
-    }
-  }
+if(type==="Legs"){
+PLAN[d]={type,exercises:[
+{name:"Leg Press",sets:[
+{w:80,r:15,t:"Warm-up"},
+{w:100,r:10,t:"Warm-up"},
+{w:120+prog,r:12,t:"Main"},
+{w:120+prog,r:12,t:"Main"},
+{w:120+prog,r:12,t:"Main"}]},
+{name:"Walking Lunges",sets:[
+{w:20,r:12,t:"Accessory"},
+{w:20,r:12,t:"Accessory"},
+{w:20,r:12,t:"Accessory"}]},
+{name:"RDL",sets:[
+{w:50,r:10,t:"Warm-up"},
+{w:70+prog,r:10,t:"Main"},
+{w:70+prog,r:10,t:"Main"}]}
+]};
+}
+}
 }
 generatePlan();
 
-/* INIT */
-setTimeout(()=>{
-  document.getElementById("splash").style.display="none";
-  show("home");
-  initHome();
-},1200);
+/* NAV */
+setTimeout(()=>{document.getElementById("splash").style.display="none";show("home");init();},1200);
 
 function show(s){
-  document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"));
-  document.getElementById(s).classList.add("active");
+document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"));
+document.getElementById(s).classList.add("active");
 }
 
-function initHome(){
-  document.getElementById("day").innerText = day;
+function init(){document.getElementById("day").innerText=day;}
+
+function goHome(){show("home");}
+function goWorkout(){show("workout");render();}
+
+function nextDay(){if(day<100){day++;localStorage.setItem("day",day);render();}}
+function prevDay(){if(day>1){day--;localStorage.setItem("day",day);render();}}
+
+/* RENDER */
+function render(){
+let d=PLAN[day];
+
+if(d.type==="Rest"){
+document.getElementById("list").innerHTML=`<div class="card">Rest Day</div>`;
+return;
 }
 
-function goHome(){ show("home"); }
+document.getElementById("workHero").innerHTML=`<div class="overlay">${d.type}</div>`;
 
-function goWorkout(){
-  show("workout");
-  renderWorkout();
+let html="";
+d.exercises.forEach(ex=>{
+html+=`<div class="card"><b>${ex.name}</b>`;
+ex.sets.forEach((s,i)=>{
+html+=`<div class="set" onclick="focus('${ex.name}',${i},${s.w},${s.r},${ex.sets.length})">${s.t} — ${s.w}kg x ${s.r}</div>`;
+});
+html+="</div>";
+});
+document.getElementById("list").innerHTML=html;
 }
 
-function nextDay(){ if(day<100){day++;localStorage.setItem("day",day);renderWorkout();}}
-function prevDay(){ if(day>1){day--;localStorage.setItem("day",day);renderWorkout();}}
-
-function renderWorkout(){
-  let d = PLAN[day];
-
-  if(d.type==="Rest"){
-    document.getElementById("list").innerHTML =
-      `<div class="card">Rest Day — Recovery</div>`;
-    return;
-  }
-
-  document.getElementById("workHero").innerHTML =
-    `<div class="overlay">${d.type} Day</div>`;
-
-  let html="";
-  d.exercises.forEach(ex=>{
-    html+=`<div class="card"><b>${ex.name}</b>`;
-    ex.sets.forEach((s,i)=>{
-      html+=`<div class="set"
-      onclick="openFocus('${ex.name}',${i},${s.w},${s.r},${ex.sets.length})">
-      ${s.t} — ${s.w}kg × ${s.r}</div>`;
-    });
-    html+="</div>";
-  });
-
-  document.getElementById("list").innerHTML = html;
-}
-
-/* FOCUS + TIMER */
+/* FOCUS */
 let current;
 let timer;
-let totalTime = 60;
+let total=60;
 
-function openFocus(ex,set,w,r,total){
-  current={ex,set,w,r,total};
-  document.getElementById("focus").style.display="block";
-  document.getElementById("f-ex").innerText=ex;
-  document.getElementById("f-set").innerText=`Set ${set+1}/${total}`;
-  document.getElementById("f-w").innerText=w+"kg";
-  document.getElementById("f-r").innerText=r+" reps";
+function focus(ex,set,w,r,totalSets){
+current={ex,set,w,r,totalSets};
+document.getElementById("focus").style.display="block";
+document.getElementById("f-ex").innerText=ex;
+document.getElementById("f-set").innerText=`Set ${set+1}/${totalSets}`;
+document.getElementById("f-w").innerText=w+"kg";
+document.getElementById("f-r").innerText=r+" reps";
 }
 
-function completeSet(){
-  data.push({...current,day});
-  localStorage.setItem("data", JSON.stringify(data));
-  startTimer(totalTime);
+function done(){
+data.push({...current,day});
+localStorage.setItem("data",JSON.stringify(data));
+startTimer();
 }
 
-function getNextSet(){
-  let d = PLAN[day];
-  for(let i=0;i<d.exercises.length;i++){
-    let ex = d.exercises[i];
-    for(let j=0;j<ex.sets.length;j++){
-      if(ex.name===current.ex && j===current.set){
-        if(j+1<ex.sets.length){
-          let s=ex.sets[j+1];
-          return {ex:ex.name,set:j+1,w:s.w,r:s.r,total:ex.sets.length};
-        }
-        if(i+1<d.exercises.length){
-          let nx=d.exercises[i+1];
-          let s=nx.sets[0];
-          return {ex:nx.name,set:0,w:s.w,r:s.r,total:nx.sets.length};
-        }
-      }
-    }
-  }
-  return null;
+function next(){
+let d=PLAN[day];
+for(let i=0;i<d.exercises.length;i++){
+let ex=d.exercises[i];
+for(let j=0;j<ex.sets.length;j++){
+if(ex.name===current.ex && j===current.set){
+if(j+1<ex.sets.length){
+let s=ex.sets[j+1];
+return {ex:ex.name,set:j+1,w:s.w,r:s.r,total:ex.sets.length};
+}
+if(i+1<d.exercises.length){
+let nx=d.exercises[i+1];
+let s=nx.sets[0];
+return {ex:nx.name,set:0,w:s.w,r:s.r,total:nx.sets.length};
+}
+}
+}
+}
+return null;
 }
 
-function startTimer(t){
-  clearInterval(timer);
-  let next=getNextSet();
+function startTimer(){
+clearInterval(timer);
+let t=60;
+let nxt=next();
 
-  if(next){
-    document.getElementById("f-set").innerText =
-      `Next: ${next.ex} (${next.w}kg x ${next.r})`;
-  }
-
-  timer=setInterval(()=>{
-    document.getElementById("timerText").innerText = t+"s";
-    let offset = 314 - (314*t/totalTime);
-    document.getElementById("circle").style.strokeDashoffset = offset;
-
-    t--;
-
-    if(t<0){
-      clearInterval(timer);
-      if(next){
-        openFocus(next.ex,next.set,next.w,next.r,next.total);
-      } else {
-        exitFocus();
-        renderWorkout();
-      }
-    }
-  },1000);
+if(nxt){
+document.getElementById("f-set").innerText=`Next: ${nxt.ex} (${nxt.w}kg x ${nxt.r})`;
 }
 
-function exitFocus(){
-  clearInterval(timer);
-  document.getElementById("focus").style.display="none";
+timer=setInterval(()=>{
+document.getElementById("timerText").innerText=t+"s";
+let offset=314-(314*t/60);
+document.getElementById("circle").style.strokeDashoffset=offset;
+t--;
+
+if(t<0){
+clearInterval(timer);
+if(nxt){
+focus(nxt.ex,nxt.set,nxt.w,nxt.r,nxt.total);
+}else{
+exit();
+render();
+}
+}
+},1000);
+}
+
+function exit(){
+clearInterval(timer);
+document.getElementById("focus").style.display="none";
 }
 </script>
 
